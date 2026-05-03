@@ -8,8 +8,16 @@ namespace VeloxStrap
         [STAThread]
         static void Main()
         {
-            ApplicationConfiguration.Initialize();
-            Application.Run(new MainForm());
+            try
+            {
+                MessageBox.Show("VeloxStrap is starting...", "Debug", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ApplicationConfiguration.Initialize();
+                Application.Run(new MainForm());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erreur au démarrage: {ex.Message}\n\n{ex.StackTrace}", "VeloxStrap - Erreur", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

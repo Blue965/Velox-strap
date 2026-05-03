@@ -320,7 +320,9 @@ namespace VeloxStrap
             this.Font = new Font("Segoe UI", 9.5f);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.None;
+            this.ShowInTaskbar = true;
             this.DoubleBuffered = true;
+            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
             // Custom title bar
             topBar = new Panel

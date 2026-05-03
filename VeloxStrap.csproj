@@ -6,5 +6,8 @@
     <ApplicationIcon>VeloxStrap.ico</ApplicationIcon>
     <RootNamespace>VeloxStrap</RootNamespace>
     <AssemblyName>VeloxStrap</AssemblyName>
+    <PublishSelfContained>true</PublishSelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
 </Project>

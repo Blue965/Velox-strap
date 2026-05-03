@@ -1,0 +1,14 @@
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\VeloxStrap.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\VeloxStrap.AssemblyInfoInputs.cache
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\VeloxStrap.AssemblyInfo.cs
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\VeloxStrap.csproj.CoreCompileInputs.cache
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\VeloxStrap.exe
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\VeloxStrap.deps.json
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\VeloxStrap.runtimeconfig.json
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\VeloxStrap.dll
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\VeloxStrap.pdb
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\VeloxStrap.dll
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\refint\VeloxStrap.dll
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\VeloxStrap.pdb
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\VeloxStrap.genruntimeconfig.cache
+C:\Users\robin\Desktop\Velox strap\obj\Release\net8.0-windows\win-x64\ref\VeloxStrap.dll

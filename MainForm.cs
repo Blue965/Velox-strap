@@ -272,6 +272,32 @@ namespace VeloxStrap
             }
         }
 
+        private void ExportFlags()
+        {
+            try
+            {
+                var json = JsonSerializer.Serialize(enabledFlags, new JsonSerializerOptions { WriteIndented = true });
+                using var dialog = new SaveFileDialog
+                {
+                    Filter = "Executable files (*.exe)|*.exe|JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = "exe",
+                    AddExtension = true,
+                    FileName = "velox-fastflags.exe",
+                    Title = "Export FastFlags as EXE",
+                };
+
+                if (dialog.ShowDialog() != DialogResult.OK)
+                    return;
+
+                File.WriteAllText(dialog.FileName, json);
+                SetStatus($"✓ Exported flags to {Path.GetFileName(dialog.FileName)}", Color.FromArgb(52, 211, 153));
+            }
+            catch (Exception ex)
+            {
+                SetStatus($"✗ Export failed: {ex.Message}", Color.FromArgb(239, 68, 68));
+            }
+        }
+
         private void SetStatus(string msg, Color col)
         {
             if (statusLabel.InvokeRequired)
@@ -421,7 +447,7 @@ namespace VeloxStrap
 
             var saveBtn = new Button
             {
-                Text = "💾  Save & Apply",
+                Text = "💾  Download EXE",
                 FlatStyle = FlatStyle.Flat,
                 Width = 200,
                 Height = 44,
@@ -433,7 +459,7 @@ namespace VeloxStrap
             };
             saveBtn.FlatAppearance.BorderSize = 0;
             saveBtn.FlatAppearance.MouseOverBackColor = accentHover;
-            saveBtn.Click += (s, e) => SaveFlags();
+            saveBtn.Click += (s, e) => ExportFlags();
             sidebar.Controls.Add(saveBtn);
 
             // Version label at bottom of sidebar
@@ -462,7 +488,6 @@ namespace VeloxStrap
                 Height = 38,
                 Location = new Point(0, 7),
                 BackColor = bgCard,
-                ForeColor = textPrimary,
                 BorderStyle = BorderStyle.None,
                 Font = new Font("Segoe UI", 10f),
                 Text = "🔍  Search flags...",

@@ -1,0 +1,5 @@
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\publish\VeloxStrap.exe
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\publish\VeloxStrap.dll
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\publish\VeloxStrap.deps.json
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\publish\VeloxStrap.runtimeconfig.json
+C:\Users\robin\Desktop\Velox strap\bin\Release\net8.0-windows\win-x64\publish\VeloxStrap.pdb

@@ -41,6 +41,13 @@ namespace VeloxStrap
             LoadSavedFlags();
             RenderFlags(currentCategory);
             StartGlowAnimation();
+            
+            // Force show the form
+            this.ShowInTaskbar = true;
+            this.WindowState = FormWindowState.Normal;
+            this.Show();
+            this.BringToFront();
+            this.Activate();
         }
 
         private void StartGlowAnimation()
@@ -323,6 +330,7 @@ namespace VeloxStrap
             this.ShowInTaskbar = true;
             this.DoubleBuffered = true;
             this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            this.Visible = true;
 
             // Custom title bar
             topBar = new Panel

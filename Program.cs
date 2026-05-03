@@ -10,7 +10,6 @@ namespace VeloxStrap
         {
             try
             {
-                MessageBox.Show("VeloxStrap is starting...", "Debug", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 ApplicationConfiguration.Initialize();
                 Application.Run(new MainForm());
             }

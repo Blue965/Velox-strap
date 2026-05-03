@@ -21,33 +21,52 @@ namespace VeloxStrap
         private TextBox searchBox;
         private FlowLayoutPanel flagsPanel;
         private Label titleLabel, flagCountLabel, statusLabel;
-        private Color accentColor = Color.FromArgb(99, 102, 241);
-        private Color accentHover = Color.FromArgb(129, 140, 248);
-        private Color bgDark = Color.FromArgb(10, 10, 20);
-        private Color bgCard = Color.FromArgb(18, 18, 35);
-        private Color bgSidebar = Color.FromArgb(13, 13, 26);
-        private Color borderColor = Color.FromArgb(40, 40, 70);
-        private Color textPrimary = Color.FromArgb(240, 240, 255);
-        private Color textSecondary = Color.FromArgb(140, 140, 180);
+        // Enhanced color palette with modern gradients
+        private Color accentColor = Color.FromArgb(124, 58, 237);
+        private Color accentHover = Color.FromArgb(167, 139, 250);
+        private Color accentGlow = Color.FromArgb(196, 181, 253);
+        private Color bgDark = Color.FromArgb(3, 7, 18);
+        private Color bgCard = Color.FromArgb(17, 24, 39);
+        private Color bgCardHover = Color.FromArgb(30, 41, 59);
+        private Color bgSidebar = Color.FromArgb(15, 23, 42);
+        private Color borderColor = Color.FromArgb(51, 65, 85);
+        private Color textPrimary = Color.FromArgb(248, 250, 252);
+        private Color textSecondary = Color.FromArgb(148, 163, 184);
+        private Color successColor = Color.FromArgb(34, 197, 94);
+        private Color warningColor = Color.FromArgb(251, 146, 60);
+        private Color dangerColor = Color.FromArgb(239, 68, 68);
+        
+        // Animation properties
+        private System.Windows.Forms.Timer cardAnimationTimer;
+        private List<Panel> animatedCards = new();
+        private float pulseAlpha = 0;
+        private bool pulseUp = true;
         private Button activeNavBtn = null;
         private System.Windows.Forms.Timer animTimer;
+        private System.Windows.Forms.Timer pulseTimer;
         private int glowAlpha = 0;
         private bool glowUp = true;
+        private float backgroundOffset = 0;
 
         public MainForm()
         {
-            InitializeFlagData();
+            // Initialize components first
             InitializeComponent();
+            InitializeFlagData();
             LoadSavedFlags();
             RenderFlags(currentCategory);
-            StartGlowAnimation();
             
-            // Force show the form
+            // Setup form properties
             this.ShowInTaskbar = true;
             this.WindowState = FormWindowState.Normal;
             this.Show();
             this.BringToFront();
             this.Activate();
+            
+            // Start advanced animations after form is shown
+            StartGlowAnimation();
+            StartPulseAnimation();
+            StartCardAnimations();
         }
 
         private void StartGlowAnimation()
@@ -61,6 +80,46 @@ namespace VeloxStrap
                 topBar?.Invalidate();
             };
             animTimer.Start();
+        }
+
+        private void StartPulseAnimation()
+        {
+            pulseTimer = new System.Windows.Forms.Timer();
+            pulseTimer.Interval = 50;
+            pulseTimer.Tick += (s, e) =>
+            {
+                if (pulseUp) { pulseAlpha += 2; if (pulseAlpha >= 30) pulseUp = false; }
+                else { pulseAlpha -= 2; if (pulseAlpha <= 5) pulseUp = true; }
+                
+                // Animate background offset for parallax effect
+                backgroundOffset += 0.5f;
+                if (backgroundOffset > 360) backgroundOffset = 0;
+                
+                // Invalidate animated cards
+                foreach (var card in animatedCards)
+                    card?.Invalidate();
+            };
+            pulseTimer.Start();
+        }
+
+        private void StartCardAnimations()
+        {
+            cardAnimationTimer = new System.Windows.Forms.Timer();
+            cardAnimationTimer.Interval = 100;
+            cardAnimationTimer.Tick += (s, e) =>
+            {
+                // Add subtle floating animation to cards
+                var time = Environment.TickCount / 1000.0f;
+                foreach (var card in animatedCards)
+                {
+                    if (card != null)
+                    {
+                        var floatOffset = (float)Math.Sin(time + card.Tag.GetHashCode() % 10) * 2;
+                        card.Top = (int)floatOffset + card.Top;
+                    }
+                }
+            };
+            cardAnimationTimer.Start();
         }
 
         private void InitializeFlagData()
@@ -333,8 +392,14 @@ namespace VeloxStrap
             this.FormBorderStyle = FormBorderStyle.None;
             this.ShowInTaskbar = true;
             this.DoubleBuffered = true;
-            this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
-            this.Visible = true;
+            try
+            {
+                this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            }
+            catch
+            {
+                // Use default icon if extraction fails
+            }
 
             // Custom title bar
             topBar = new Panel
@@ -347,12 +412,12 @@ namespace VeloxStrap
 
             var closeBtn = MakeTopBarBtn("✕", Color.FromArgb(239, 68, 68));
             closeBtn.Click += (s, e) => { SaveFlags(); Application.Exit(); };
-            closeBtn.Location = new Point(this.Width - 42, 12);
+            closeBtn.Location = new Point(1280 - 42, 12);
             closeBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
             var minBtn = MakeTopBarBtn("─", Color.FromArgb(251, 191, 36));
             minBtn.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
-            minBtn.Location = new Point(this.Width - 84, 12);
+            minBtn.Location = new Point(1280 - 84, 12);
             minBtn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
 
             var logoLabel = new Label
@@ -383,7 +448,7 @@ namespace VeloxStrap
                 AutoSize = true,
                 BackColor = Color.Transparent,
             };
-            statusLabel.Location = new Point((this.Width / 2) - 60, 18);
+            statusLabel.Location = new Point(640 - 60, 18);
             statusLabel.Anchor = AnchorStyles.Top;
 
             topBar.Controls.AddRange(new Control[] { logoLabel, subLabel, statusLabel, minBtn, closeBtn });
@@ -548,9 +613,37 @@ namespace VeloxStrap
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-            // Bottom border glow
-            using var pen = new Pen(Color.FromArgb(glowAlpha, accentColor), 1.5f);
-            g.DrawLine(pen, 0, topBar.Height - 1, topBar.Width, topBar.Height - 1);
+            
+            // Create gradient background
+            using var gradientBrush = new LinearGradientBrush(
+                new Rectangle(0, 0, topBar.Width, topBar.Height),
+                Color.FromArgb(15, 23, 42),
+                Color.FromArgb(30, 41, 59),
+                LinearGradientMode.Vertical);
+            
+            // Add animated gradient overlay
+            using var overlayBrush = new LinearGradientBrush(
+                new Rectangle(0, 0, topBar.Width, topBar.Height),
+                Color.FromArgb((int)pulseAlpha, accentColor),
+                Color.Transparent,
+                LinearGradientMode.Horizontal);
+            
+            g.FillRectangle(gradientBrush, 0, 0, topBar.Width, topBar.Height);
+            g.FillRectangle(overlayBrush, 0, 0, topBar.Width, topBar.Height);
+            
+            // Enhanced bottom border with glow effect
+            using var glowPen = new Pen(Color.FromArgb(glowAlpha, accentColor), 2f);
+            using var shadowPen = new Pen(Color.FromArgb(glowAlpha / 2, accentColor), 4f);
+            
+            // Draw shadow
+            g.DrawLine(shadowPen, 0, topBar.Height, topBar.Width, topBar.Height);
+            // Draw main glow
+            g.DrawLine(glowPen, 0, topBar.Height - 1, topBar.Width, topBar.Height - 1);
+            
+            // Add subtle corner accents
+            using var accentBrush = new SolidBrush(Color.FromArgb((int)(pulseAlpha / 2), accentGlow));
+            g.FillEllipse(accentBrush, 10, 10, 4, 4);
+            g.FillEllipse(accentBrush, topBar.Width - 14, 10, 4, 4);
         }
 
         private Button MakeTopBarBtn(string text, Color hoverColor)
@@ -558,17 +651,52 @@ namespace VeloxStrap
             var btn = new Button
             {
                 Text = text,
-                Size = new Size(28, 28),
+                Size = new Size(32, 32),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.Transparent,
                 ForeColor = textSecondary,
-                Font = new Font("Segoe UI", 9f),
+                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
                 Cursor = Cursors.Hand,
+                Margin = new Padding(2),
             };
             btn.FlatAppearance.BorderSize = 0;
-            btn.FlatAppearance.MouseOverBackColor = hoverColor;
-            btn.MouseEnter += (s, e) => btn.ForeColor = Color.White;
-            btn.MouseLeave += (s, e) => btn.ForeColor = textSecondary;
+            btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(40, hoverColor.R, hoverColor.G, hoverColor.B);
+            
+            // Enhanced hover effects
+            btn.MouseEnter += (s, e) => {
+                btn.ForeColor = Color.White;
+                btn.BackColor = Color.FromArgb(60, hoverColor.R, hoverColor.G, hoverColor.B);
+                btn.Invalidate();
+            };
+            btn.MouseLeave += (s, e) => {
+                btn.ForeColor = textSecondary;
+                btn.BackColor = Color.Transparent;
+                btn.Invalidate();
+            };
+            
+            // Custom paint for rounded corners and glow
+            btn.Paint += (s, e) => {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                
+                if (btn.BackColor != Color.Transparent)
+                {
+                    // Draw glow effect
+                    using var glowBrush = new SolidBrush(Color.FromArgb(20, hoverColor));
+                    g.FillEllipse(glowBrush, -2, -2, btn.Width + 4, btn.Height + 4);
+                }
+                
+                // Draw rounded background
+                using var path = new GraphicsPath();
+                path.AddEllipse(0, 0, btn.Width, btn.Height);
+                using var brush = new SolidBrush(btn.BackColor);
+                g.FillPath(brush, path);
+                
+                // Draw border
+                using var pen = new Pen(Color.FromArgb((int)(pulseAlpha / 3), hoverColor), 1f);
+                g.DrawPath(pen, path);
+            };
+            
             return btn;
         }
 
@@ -642,50 +770,121 @@ namespace VeloxStrap
             var card = new Panel
             {
                 Width = flagsPanel.Width - 30,
-                Height = 82,
+                Height = 92,
                 BackColor = bgCard,
-                Margin = new Padding(0, 0, 0, 8),
+                Margin = new Padding(0, 0, 0, 12),
                 Cursor = Cursors.Hand,
                 Tag = flag.Key,
             };
+            
+            // Add to animated cards list
+            animatedCards.Add(card);
+            
             card.Paint += (s, e) =>
             {
                 var g = e.Graphics;
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-                using var p = new Pen(enabledFlags[flag.Key] ? Color.FromArgb(60, accentColor.R, accentColor.G, accentColor.B) : borderColor, 1);
-                using var path = RoundRectPath(new Rectangle(0, 0, card.Width - 1, card.Height - 1), 10);
-                g.DrawPath(p, path);
-
-                if (enabledFlags[flag.Key])
+                
+                // Create gradient background
+                var categoryColor = GetCategoryColor(flag.Category);
+                using var bgGradient = new LinearGradientBrush(
+                    new Rectangle(0, 0, card.Width, card.Height),
+                    bgCard,
+                    isEnabled ? Color.FromArgb(30, categoryColor.R, categoryColor.G, categoryColor.B) : bgCardHover,
+                    LinearGradientMode.Vertical);
+                
+                using var path = RoundRectPath(new Rectangle(0, 0, card.Width - 1, card.Height - 1), 12);
+                g.FillPath(bgGradient, path);
+                
+                // Enhanced border with glow effect
+                if (isEnabled)
                 {
-                    using var glow = new LinearGradientBrush(new Rectangle(0, 0, 4, card.Height), accentColor, Color.Transparent, LinearGradientMode.Horizontal);
-                    g.FillRectangle(glow, 0, 10, 3, card.Height - 20);
+                    // Multi-layer glow effect
+                    using var glowPen1 = new Pen(Color.FromArgb((int)pulseAlpha, categoryColor), 3f);
+                    using var glowPen2 = new Pen(Color.FromArgb((int)(pulseAlpha / 2), categoryColor), 2f);
+                    using var mainPen = new Pen(Color.FromArgb(100, categoryColor.R, categoryColor.G, categoryColor.B), 1.5f);
+                    
+                    g.DrawPath(glowPen1, path);
+                    g.DrawPath(glowPen2, path);
+                    g.DrawPath(mainPen, path);
+                    
+                    // Animated side glow
+                    using var sideGlow = new LinearGradientBrush(
+                        new Rectangle(0, 0, 6, card.Height),
+                        Color.FromArgb((int)pulseAlpha, categoryColor),
+                        Color.Transparent,
+                        LinearGradientMode.Horizontal);
+                    g.FillRectangle(sideGlow, 0, 15, 4, card.Height - 30);
                 }
+                else
+                {
+                    using var borderPen = new Pen(Color.FromArgb(80, borderColor.R, borderColor.G, borderColor.B), 1f);
+                    g.DrawPath(borderPen, path);
+                }
+                
+                // Add subtle corner highlight
+                using var highlightBrush = new SolidBrush(Color.FromArgb((int)(pulseAlpha / 4), Color.White));
+                g.FillEllipse(highlightBrush, 8, 8, 2, 2);
+            };
+            
+            // Enhanced hover effects
+            card.MouseEnter += (s, e) => {
+                card.BackColor = bgCardHover;
+                card.Invalidate();
+            };
+            card.MouseLeave += (s, e) => {
+                card.BackColor = bgCard;
+                card.Invalidate();
             };
 
-            // Category badge
+            // Enhanced category badge with glow
             var catBadge = new Label
             {
                 Text = flag.Category.ToUpper(),
-                Font = new Font("Segoe UI", 7f, FontStyle.Bold),
-                ForeColor = GetCategoryColor(flag.Category),
-                AutoSize = true,
-                Location = new Point(16, 12),
+                Font = new Font("Segoe UI", 6.5f, FontStyle.Bold),
+                ForeColor = Color.White,
+                AutoSize = false,
+                Width = 70,
+                Height = 18,
+                Location = new Point(16, 10),
                 BackColor = Color.Transparent,
+                TextAlign = ContentAlignment.MiddleCenter,
+            };
+            catBadge.Paint += (s, e) => {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                var catColor = GetCategoryColor(flag.Category);
+                
+                // Rounded background with gradient
+                using var bgBrush = new LinearGradientBrush(
+                    new Rectangle(0, 0, catBadge.Width, catBadge.Height),
+                    Color.FromArgb(200, catColor.R, catColor.G, catColor.B),
+                    catColor,
+                    LinearGradientMode.Vertical);
+                using var path = RoundRectPath(new Rectangle(0, 0, catBadge.Width - 1, catBadge.Height - 1), 9);
+                g.FillPath(bgBrush, path);
+                
+                // Glow effect
+                using var glowPen = new Pen(Color.FromArgb((int)(pulseAlpha / 2), catColor), 1f);
+                g.DrawPath(glowPen, path);
+                
+                // Text
+                var textBrush = new SolidBrush(Color.White);
+                g.DrawString(catBadge.Text, catBadge.Font, textBrush, 4, 2);
             };
 
-            // Flag name
+            // Enhanced flag name with better typography
             var nameLabel = new Label
             {
                 Text = flag.Name,
-                Font = new Font("Segoe UI", 10f, FontStyle.Bold),
+                Font = new Font("Segoe UI", 10.5f, FontStyle.Bold),
                 ForeColor = textPrimary,
                 AutoSize = true,
-                Location = new Point(16, 30),
+                Location = new Point(16, 32),
                 BackColor = Color.Transparent,
             };
 
-            // Description
+            // Enhanced description with subtle gradient
             var descLabel = new Label
             {
                 Text = flag.Description,
@@ -693,21 +892,41 @@ namespace VeloxStrap
                 ForeColor = textSecondary,
                 AutoSize = false,
                 Width = card.Width - 180,
-                Height = 20,
-                Location = new Point(16, 54),
+                Height = 22,
+                Location = new Point(16, 58),
                 BackColor = Color.Transparent,
             };
 
-            // Key label
+            // Enhanced key label with modern styling
             var keyLabel = new Label
             {
                 Text = flag.Key.Length > 30 ? flag.Key.Substring(0, 27) + "..." : flag.Key,
-                Font = new Font("Consolas", 7.5f),
-                ForeColor = Color.FromArgb(80, 80, 120),
-                AutoSize = true,
-                Location = new Point(card.Width - 170, 12),
-                BackColor = Color.Transparent,
+                Font = new Font("Consolas", 7.5f, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 100, 140),
+                AutoSize = false,
+                Width = 160,
+                Height = 16,
+                Location = new Point(card.Width - 170, 10),
+                BackColor = Color.FromArgb(20, 30, 50),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
+                TextAlign = ContentAlignment.MiddleCenter,
+            };
+            keyLabel.Paint += (s, e) => {
+                var g = e.Graphics;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                
+                // Background with rounded corners
+                using var bgBrush = new SolidBrush(Color.FromArgb(20, 30, 50));
+                using var path = RoundRectPath(new Rectangle(0, 0, keyLabel.Width - 1, keyLabel.Height - 1), 8);
+                g.FillPath(bgBrush, path);
+                
+                // Border
+                using var borderPen = new Pen(Color.FromArgb(40, 60, 90), 1f);
+                g.DrawPath(borderPen, path);
+                
+                // Text
+                var textBrush = new SolidBrush(keyLabel.ForeColor);
+                g.DrawString(keyLabel.Text, keyLabel.Font, textBrush, 4, 1);
             };
 
             // Toggle switch
@@ -778,22 +997,43 @@ namespace VeloxStrap
         {
             _isOn = isOn;
             _onColor = onColor;
-            _thumbX = isOn ? 24f : 4f;
-            Size = new Size(50, 26);
+            _thumbX = isOn ? 26f : 4f;
+            Size = new Size(56, 30);
             DoubleBuffered = true;
             Cursor = Cursors.Hand;
+            _animating = false;
         }
 
         protected override void OnClick(EventArgs e)
         {
             base.OnClick(e);
+            if (_animating) return;
+            
             _isOn = !_isOn;
-            var timer = new System.Windows.Forms.Timer { Interval = 12 };
+            _animating = true;
+            
+            var timer = new System.Windows.Forms.Timer { Interval = 8 };
             timer.Tick += (s, ev) =>
             {
-                float target = _isOn ? 24f : 4f;
-                _thumbX += (_isOn ? 1.5f : -1.5f);
-                if ((_isOn && _thumbX >= target) || (!_isOn && _thumbX <= target)) { _thumbX = target; timer.Stop(); timer.Dispose(); }
+                float target = _isOn ? 26f : 4f;
+                float speed = 2.0f;
+                
+                if (_isOn && _thumbX < target)
+                {
+                    _thumbX = Math.Min(_thumbX + speed, target);
+                }
+                else if (!_isOn && _thumbX > target)
+                {
+                    _thumbX = Math.Max(_thumbX - speed, target);
+                }
+                
+                if (_thumbX == target)
+                {
+                    timer.Stop();
+                    timer.Dispose();
+                    _animating = false;
+                }
+                
                 Invalidate();
             };
             timer.Start();
@@ -804,13 +1044,59 @@ namespace VeloxStrap
         {
             var g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
-
-            var trackColor = _isOn ? _onColor : Color.FromArgb(50, 50, 80);
-            using var trackBrush = new SolidBrush(trackColor);
-            g.FillRoundedRectangle(trackBrush, 0, 0, Width, Height, Height / 2);
-
-            using var thumbBrush = new SolidBrush(Color.White);
-            g.FillEllipse(thumbBrush, _thumbX, 3, 20, 20);
+            
+            // Enhanced track with gradient and glow
+            var trackColor = _isOn ? _onColor : Color.FromArgb(60, 60, 90);
+            
+            using var trackGradient = new LinearGradientBrush(
+                new Rectangle(0, 0, Width, Height),
+                _isOn ? Color.FromArgb(120, _onColor.R, _onColor.G, _onColor.B) : Color.FromArgb(40, 40, 60),
+                trackColor,
+                LinearGradientMode.Vertical);
+            
+            // Draw track with rounded corners
+            g.FillRoundedRectangle(trackGradient, 0, 0, Width, Height, Height / 2);
+            
+            // Add glow effect when on
+            if (_isOn)
+            {
+                using var glowBrush = new SolidBrush(Color.FromArgb(30, _onColor.R, _onColor.G, _onColor.B));
+                g.FillRoundedRectangle(glowBrush, -2, -2, Width + 4, Height + 4, Height / 2 + 2);
+            }
+            
+            // Enhanced thumb with shadow and gradient
+            var thumbSize = 22;
+            var thumbY = (Height - thumbSize) / 2;
+            
+            // Draw shadow
+            using var shadowBrush = new SolidBrush(Color.FromArgb(20, 0, 0, 0));
+            g.FillEllipse(shadowBrush, _thumbX + 1, thumbY + 2, thumbSize, thumbSize);
+            
+            // Draw thumb with gradient
+            using var thumbGradient = new LinearGradientBrush(
+                new Rectangle((int)_thumbX, thumbY, thumbSize, thumbSize),
+                Color.White,
+                Color.FromArgb(240, 240, 240),
+                LinearGradientMode.Vertical);
+            g.FillEllipse(thumbGradient, (int)_thumbX, thumbY, thumbSize, thumbSize);
+            
+            // Add inner highlight
+            using var highlightBrush = new SolidBrush(Color.FromArgb(100, 255, 255, 255));
+            g.FillEllipse(highlightBrush, (int)_thumbX + 4, thumbY + 4, 6, 6);
+        }
+        
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            base.OnMouseEnter(e);
+            // Add hover effect
+            Invalidate();
+        }
+        
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            // Remove hover effect
+            Invalidate();
         }
     }
 

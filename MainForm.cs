@@ -73,7 +73,6 @@ namespace VeloxStrap
                 new FastFlag("FFlagDebugGraphicsPreferD3D11", "Prefer Direct3D11", "Graphics", "Forces Roblox to use DX11.", "true"),
                 new FastFlag("FFlagDebugGraphicsPreferVulkan", "Prefer Vulkan", "Graphics", "Forces Roblox to use Vulkan renderer.", "true"),
                 new FastFlag("FFlagDebugGraphicsPreferOpenGL", "Prefer OpenGL", "Graphics", "Forces Roblox to use OpenGL renderer.", "true"),
-                new FastFlag("DFIntDebugFRMQualityLevelOverride", "FRM Quality Override", "Graphics", "Override FRM quality level (1-21).", "1"),
                 new FastFlag("FFlagDisablePostFx", "Disable Post Effects", "Graphics", "Removes all post-processing effects.", "true"),
                 new FastFlag("FFlagEnableQuickGameLaunch", "Quick Game Launch", "Graphics", "Speeds up initial game rendering.", "true"),
                 new FastFlag("DFIntRenderClampRoughnessMax", "Roughness Max Clamp", "Graphics", "Max roughness clamp value.", "1000000000"),
@@ -262,7 +261,12 @@ namespace VeloxStrap
                                 enabledFlags[kv.Key] = kv.Value;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Log the error but don't crash the application
+                System.Diagnostics.Debug.WriteLine($"Failed to load saved flags: {ex.Message}");
+                SetStatus("⚠ Failed to load saved flags", Color.FromArgb(251, 191, 36));
+            }
         }
 
         private void SaveFlags()
@@ -286,11 +290,11 @@ namespace VeloxStrap
                 var json = JsonSerializer.Serialize(enabledFlags, new JsonSerializerOptions { WriteIndented = true });
                 using var dialog = new SaveFileDialog
                 {
-                    Filter = "Executable files (*.exe)|*.exe|JSON files (*.json)|*.json|All files (*.*)|*.*",
-                    DefaultExt = "exe",
+                    Filter = "JSON files (*.json)|*.json|All files (*.*)|*.*",
+                    DefaultExt = "json",
                     AddExtension = true,
-                    FileName = "velox-fastflags.exe",
-                    Title = "Export FastFlags as EXE",
+                    FileName = "velox-fastflags.json",
+                    Title = "Export FastFlags as JSON",
                 };
 
                 if (dialog.ShowDialog() != DialogResult.OK)
@@ -457,7 +461,7 @@ namespace VeloxStrap
 
             var saveBtn = new Button
             {
-                Text = "💾  Download EXE",
+                Text = "💾  Export JSON",
                 FlatStyle = FlatStyle.Flat,
                 Width = 200,
                 Height = 44,
